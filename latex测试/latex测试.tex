@@ -1,0 +1,116 @@
+\documentclass[12pt,a4paper]{ctexrep}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+
+% 行距设置（可根据学校要求调整）
+\onehalfspacing
+
+% 论文基本信息
+\newcommand{\thesistitle}{基于XXX的XXX研究}
+\newcommand{\authorname}{你的姓名}
+\newcommand{\schoolname}{你的学校名称}
+\newcommand{\majorname}{你的专业}
+\newcommand{\advisorname}{指导教师姓名}
+\newcommand{\submitdate}{2026年3月}
+
+\begin{document}
+
+% -------------------- 封面 --------------------
+\begin{titlepage}
+    \centering
+    {\zihao{2}\bfseries \schoolname \par}
+    \vspace{2cm}
+    {\zihao{1}\bfseries 毕业论文\par}
+    \vspace{2.5cm}
+    {\zihao{2}\bfseries \thesistitle \par}
+    \vfill
+    \begin{tabular}{rl}
+        学\hspace{1em}生： & \authorname \\
+        专\hspace{1em}业： & \majorname \\
+        指导教师： & \advisorname \\
+        提交日期： & \submitdate \\
+    \end{tabular}
+    \vfill
+\end{titlepage}
+
+% -------------------- 前置部分 --------------------
+\pagenumbering{Roman}
+
+\chapter*{摘要}
+这里填写中文摘要内容。建议简要介绍研究背景、研究方法、主要结果和结论。
+
+\textbf{关键词：}关键词1；关键词2；关键词3
+
+\chapter*{Abstract}
+Write your English abstract here.
+
+\textbf{Key Words:} keyword1; keyword2; keyword3
+
+\tableofcontents
+\clearpage
+
+% -------------------- 正文 --------------------
+\pagenumbering{arabic}
+
+\chapter{绪论}
+\section{研究背景}
+这里填写研究背景。
+
+\section{研究意义}
+这里填写理论意义与实际意义。
+
+\section{研究内容与结构安排}
+这里填写论文整体结构安排。
+
+\chapter{相关理论与文献综述}
+\section{相关理论基础}
+这里填写理论基础。
+
+\section{国内外研究现状}
+这里填写文献综述。
+
+\chapter{研究方法与模型（或系统设计）}
+\section{研究方法}
+这里描述研究方法。
+
+\section{模型构建（或系统架构）}
+这里描述模型或系统架构。
+
+\chapter{实验设计与结果分析（或实现与测试）}
+\section{实验设计}
+这里描述实验方案、数据来源与评价指标。
+
+\section{结果分析}
+这里分析实验结果，可配图表说明。
+
+\chapter{结论与展望}
+\section{研究结论}
+总结本文主要工作与结论。
+
+\section{不足与未来工作}
+说明研究不足与后续研究方向。
+
+% -------------------- 参考文献 --------------------
+\begin{thebibliography}{99}
+\bibitem{ref1} 作者. 文献标题[J]. 期刊名, 年份, 卷(期): 页码.
+\bibitem{ref2} Author. Title[C]. Conference, Year: pages.
+\end{thebibliography}
+
+% -------------------- 附录 --------------------
+\appendix
+\chapter{附录标题}
+这里放附录内容，如公式推导、额外图表、代码片段等。
+
+% -------------------- 致谢 --------------------
+\chapter*{致谢}
+感谢导师、同学、家人及所有提供帮助的人。
+
+\end{document}
