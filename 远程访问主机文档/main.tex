@@ -1,0 +1,131 @@
+\documentclass[12pt,a4paper]{ctexart}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue]{hyperref}
+\usepackage{enumitem}
+\usepackage{longtable}
+
+\title{基于局域网常开工控机与 Tailscale 的远程访问主机操作手册}
+\author{大纲}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\clearpage
+
+
+
+\section{目标拓扑}
+\begin{itemize}[leftmargin=2em]
+    \item 远程客户端：外部网络中的电脑或手机。
+    \item 工控机：局域网内常开，安装 Tailscale，作为跳板或管理入口。
+    \item 目标主机：真正需要远程控制的工作主机，需要通过网线连接网络。
+    \item 路由器/交换机：提供局域网连接。
+\end{itemize}
+
+
+
+\section{步骤 1：部署工控机基础环境}
+
+\subsection{操作内容}
+\begin{itemize}[leftmargin=2em]
+    \item 安装debian12系统，安装过程中需要选择安装ssh服务和标准系统工具。
+    \begin{verbatim}
+        进入root权限
+        su -
+        更新软件源、升级系统
+        apt update
+        apt upgrade -y
+        安装SSH服务（如果没有安装的话）
+        apt install -y openssh-server
+        启动SSH服务
+        systemctl start ssh
+        设置SSH服务开机自启
+        systemctl enable ssh
+        检查SSH服务状态
+        systemctl status ssh
+        查看本机ip
+        ip a
+
+    \end{verbatim}
+    \item 安装tailscale服务。
+    \begin{verbatim}
+        测试能否直接走tailscale官方服务
+        curl -I --max-time 10 https://tailscale.com
+        curl -I --max-time 10 https://login.tailscale.com
+        curl -I --max-time 10 https://controlplane.tailscale.com
+        如果上面都返回200或302，则表示能直接走官方服务
+        安装tailscale
+        curl -fsSL https://tailscale.com/install.sh | sh
+        启动tailscale服务
+        systemctl start tailscaled
+        设置tailscale服务开机自启
+        systemctl enable tailscaled
+        在tailscale后台生成一个新的authkey，打开
+        https://login.tailscale.com/admin/authkeys
+        用auth key登录debian
+        export TS_AUTH_KEY='生成的KEY'
+        tailscale up --reset --auth-key="$TS_AUTH_KEY" --hostname=起一个名字（如debian） --ssh
+        unset TS_AUTH_KEY
+        查看tailscale是否登录成功
+        tailscale status
+        tailscale ip -4
+        tailscaale netcheck
+        正常时会看到
+        tailscale status显示这台机器在线
+        tailscale ip -4显示一个100开头的IP地址
+        tailscale netcheck返回连通性信息
+        确保开机自启动
+        systemctl is-enabled tailscaled
+        关闭后台的key expiry，实现长期在线
+
+    \end{verbatim}
+    \item 安装唤醒工具
+    \begin{verbatim}
+        安装wakeonlan工具
+        apt install -y wakeonlan etherwake
+        确认debian的局域网网段和接口
+        ip a
+        ip link
+        根据他的ip地址确认广播地址，如192.168.10.109/24的广播地址是192.168.10.255
+        准备目标主机的真实MAC地址，在目标主机执行ipconfig /all
+
+    \end{verbatim}
+\end{itemize}
+
+
+
+\section{步骤 2：配置目标主机的远程访问能力}
+
+\subsection{操作内容}
+\begin{itemize}[leftmargin=2em]
+    \item BOIS里开启远程唤醒功能（如果支持）。
+    常见名字包括 Wake-on-LAN、Power on by PCI-E、Power on by LAN 等。
+    \item windows设置
+    \begin{verbatim}
+    设备管理器-网络适配器-有线网卡-属性-高级
+    wake on magic packet 设置为 enabled
+    wake on pattern match 设置为 enabled
+    shutdown wake on lan 设置为 enabled
+    电源管理里勾选允许此设备唤醒计算机，只允许魔术包唤醒计算机
+    关闭Windows快速启动
+    控制面板-电源选项-选择电源按钮的功能-更改当前不可用的设置-取消勾选启用快速启动
+
+    \end{verbatim}
+    \item 安装tailscale客户端   
+    \begin{verbatim}
+    直接通过网页搜索软件安装即可，并登录同一账号，确认能看到工控机在线
+    在debian主机上发送唤醒包测试
+    wakeonlan -i 广播地址（如192.168.10.255） 目标主机MAC地址
+    完整例子 wakeonlan -i 192.168.10.255 00:11:22:33:44:55
+
+    \end{verbatim}
+\end{itemize}
+
+
+
+
+
+\end{document}
