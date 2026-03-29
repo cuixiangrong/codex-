@@ -1,0 +1,453 @@
+\documentclass[UTF8]{ctexart}
+\usepackage{listings}
+\usepackage{xcolor}
+
+
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    columns=fullflexible,
+    extendedchars=false,
+    inputencoding=utf8,
+    keepspaces=true
+}
+
+\geometry{a4paper, margin=2cm}
+
+\lstset{
+basicstyle=\ttfamily\small,
+breaklines=true,
+frame=single,
+columns=fullflexible
+}
+
+\title{基于 WSL + rsync 的跨主机大文件传输完整指南}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{总体架构}
+
+本方案采用如下结构：
+
+\begin{lstlisting}
+发送端 WSL (rsync)
+↓ SSH
+接收端 Windows (OpenSSH + cwRsync)
+\end{lstlisting}
+
+特点：
+\begin{itemize}
+\item 不需要端口转发
+\item 支持断点续传
+\item 适用于大文件
+\end{itemize}
+
+---
+
+\section{接收端配置（Windows）}
+
+\subsection{1. 安装 cwRsync}
+
+将下载的压缩包解压到：
+
+\begin{lstlisting}
+D:\cwrsync_6.4.7_x64_free
+\end{lstlisting}
+
+确认存在：
+
+\begin{lstlisting}
+D:\cwrsync_6.4.7_x64_free\bin\rsync.exe
+\end{lstlisting}
+
+---
+
+\subsection{2. 验证 rsync（在 PowerShell 执行）}
+
+\begin{lstlisting}
+& "D:\cwrsync_6.4.7_x64_free\bin\rsync.exe" --version
+\end{lstlisting}
+
+若输出：
+
+\begin{lstlisting}
+rsync  version 3.x.x
+\end{lstlisting}
+
+说明安装成功。
+
+---
+
+\subsection{3. 启动 SSH 服务（PowerShell 执行）}
+
+\begin{lstlisting}
+Start-Service sshd
+\end{lstlisting}
+
+验证：
+
+\begin{lstlisting}
+Get-Service sshd
+\end{lstlisting}
+
+状态应为：
+
+\begin{lstlisting}
+Running
+\end{lstlisting}
+
+---
+
+\subsection{4. 创建目标目录}
+
+\begin{lstlisting}
+mkdir D:\targetprofile
+\end{lstlisting}
+
+---
+
+\section{发送端配置（WSL）}
+
+\subsection{1. 安装 rsync}
+
+在 WSL 终端执行：
+
+\begin{lstlisting}
+sudo apt update
+sudo apt install rsync -y
+\end{lstlisting}
+
+---
+
+\subsection{2. 验证 rsync}
+
+\begin{lstlisting}
+rsync --version
+\end{lstlisting}
+
+---
+
+\subsection{3. 测试 SSH 连接}
+
+\begin{lstlisting}
+ssh ggbond@100.102.3.10
+\end{lstlisting}
+
+成功标志：
+
+\begin{itemize}
+\item 能进入远程终端
+\end{itemize}
+
+退出：
+
+\begin{lstlisting}
+exit
+\end{lstlisting}
+
+---
+
+\section{文件路径说明}
+
+\begin{itemize}
+\item WSL 路径：
+\end{itemize}
+
+\begin{lstlisting}
+/mnt/f/xxx
+\end{lstlisting}
+
+\begin{itemize}
+\item Windows rsync 路径：
+\end{itemize}
+
+\begin{lstlisting}
+/cygdrive/d/targetprofile/
+\end{lstlisting}
+
+---
+
+\section{执行 rsync（发送端 WSL 执行）}
+
+\subsection{完整命令}
+
+\begin{lstlisting}
+rsync -avP --inplace --partial 
+-e "ssh -T -c [aes128-gcm@openssh.com](mailto:aes128-gcm@openssh.com) -o Compression=no" 
+--rsync-path="D:/cwrsync_6.4.7_x64_free/bin/rsync.exe" 
+"/mnt/f/[Mumuy] 金瓶梅 1-28(武松篇章完)+番外更新 (圣诞礼物 & 简中版 DLsite发售中！) [Chinese] [Ongoing]/" 
+ggbond@100.102.3.10:"/cygdrive/d/漫画/"
+\end{lstlisting}
+
+---
+
+\subsection{执行说明}
+
+\begin{itemize}
+\item 在 \textbf{发送端 WSL} 执行
+\item 不需要先 ssh 登录
+\end{itemize}
+
+---
+
+\subsection{首次执行提示}
+
+\begin{lstlisting}
+Are you sure you want to continue connecting (yes/no)?
+\end{lstlisting}
+
+输入：
+
+\begin{lstlisting}
+yes
+\end{lstlisting}
+
+然后输入密码（不会显示字符）
+
+---
+
+\section{运行结果}
+
+成功时输出：
+
+\begin{lstlisting}
+sending incremental file list
+xxx.zip
+30%  20MB/s
+\end{lstlisting}
+
+---
+
+\section{断点续传}
+
+重新执行相同命令即可：
+
+\begin{lstlisting}
+rsync -avP ...
+\end{lstlisting}
+
+---
+\section{日常使用指南}
+
+本节用于说明系统搭建完成后，日常仅进行文件传输时，发送端与接收端分别需要开启或关闭哪些服务，以及推荐的日常操作流程。
+
+\subsection{总体原则}
+
+本方案的传输结构为：
+
+\begin{lstlisting}
+发送端 WSL (rsync)
+      ↓ SSH
+接收端 Windows (OpenSSH + cwRsync)
+\end{lstlisting}
+
+日常使用时应遵循以下原则：
+
+\begin{itemize}
+    \item 接收端必须开启 SSH 服务；
+    \item 发送端无需开启 SSH 服务；
+    \item 发送端只需打开 WSL 并执行 rsync 命令；
+    \item 文件传输结束后，可根据安全需要关闭接收端 SSH 服务。
+\end{itemize}
+
+\subsection{开机后接收端需要执行的操作}
+
+接收端是指接收文件的 Windows 电脑。
+
+\subsubsection{2.1 启动 SSH 服务}
+
+在接收端 \textbf{Windows PowerShell} 中执行：
+
+\begin{lstlisting}
+Start-Service sshd
+\end{lstlisting}
+
+\subsubsection{检查 SSH 服务是否正常运行}
+
+在接收端 \textbf{Windows PowerShell} 中执行：
+
+\begin{lstlisting}
+Get-Service sshd
+\end{lstlisting}
+
+若输出中包含如下状态，则说明 SSH 服务已成功启动：
+
+\begin{lstlisting}
+Running
+\end{lstlisting}
+
+\subsubsection{ 检查 cwRsync 是否可用（可选）}
+
+在接收端 \textbf{Windows PowerShell} 中执行：
+
+\begin{lstlisting}
+& "D:\cwrsync_6.4.7_x64_free\bin\rsync.exe" --version
+\end{lstlisting}
+
+若输出中包含 rsync 版本号，则说明接收端 rsync 可正常使用。
+
+\subsubsection{ 确认 Tailscale 已连接（若通过 Tailscale 传输）}
+
+若本方案通过 Tailscale 进行跨设备连接，则接收端还应确认 Tailscale 客户端已处于在线状态，并确保其 Tailscale IP 未发生异常变化。
+
+\subsection{开机后发送端需要执行的操作}
+
+发送端是指发起文件传输的电脑。
+
+\subsubsection{打开 WSL 终端}
+
+发送端无需启动 SSH 服务，只需打开 WSL 终端即可。
+
+\subsubsection{检查 rsync 是否可用}
+
+在发送端 \textbf{WSL 终端} 中执行：
+
+\begin{lstlisting}
+rsync --version
+\end{lstlisting}
+
+若输出中包含 rsync 版本号，则说明发送端 rsync 可正常使用。
+
+\subsubsection{测试与接收端的 SSH 连通性（可选）}
+
+在发送端 \textbf{WSL 终端} 中执行（这里的ip和用户名要根据tailscale里的写）：
+
+\begin{lstlisting}
+ssh ggbond@100.102.3.10
+\end{lstlisting}
+
+若能正常进入远程终端，则说明网络与 SSH 服务均正常。测试完成后可执行：
+
+\begin{lstlisting}
+exit
+\end{lstlisting}
+
+退出远程终端。
+
+\subsection{日常传输文件的操作步骤}
+
+\subsubsection{在发送端 WSL 中执行 rsync 命令}
+
+在发送端 \textbf{WSL 终端} 中直接执行下列命令：
+
+\begin{lstlisting}
+rsync -avP --inplace --partial \
+-e "ssh -T -c aes128-gcm@openssh.com -o Compression=no" \
+--rsync-path="D:/cwrsync_6.4.7_x64_free/bin/rsync.exe" \
+"/mnt/f/yourprofile/" \
+ggbond@100.102.3.10:"/cygdrive/d/targetprofile/"
+\end{lstlisting}
+
+需要注意：
+
+\begin{itemize}
+    \item 该命令必须在发送端 \textbf{本地 WSL} 中执行；
+    \item 不需要先手动执行 \texttt{ssh ggbond@100.102.3.10} 再执行 rsync；
+    \item rsync 会自动调用 SSH 完成远程连接。
+\end{itemize}
+
+\subsubsection{首次连接时的确认}
+
+若为第一次连接接收端，系统可能提示：
+
+\begin{lstlisting}
+Are you sure you want to continue connecting (yes/no)?
+\end{lstlisting}
+
+此时输入：
+
+\begin{lstlisting}
+yes
+\end{lstlisting}
+
+然后回车。
+
+\subsubsection{输入密码}
+
+随后系统会提示输入密码。输入时终端中不会显示任何字符，此为正常现象。输入完成后直接回车即可。
+
+\subsubsection{传输中断后的续传}
+
+若传输过程中中断，只需在发送端 WSL 中重新执行同一条 rsync 命令即可。由于已启用 \texttt{-P} 与 \texttt{--partial} 参数，rsync 会自动从中断位置继续传输。
+
+\subsection{文件传输完成后需要关闭哪些服务}
+
+\subsubsection{发送端}
+
+发送端在文件传输完成后，无需执行额外关闭操作。直接关闭 WSL 终端即可。
+
+\subsubsection{接收端}
+
+若出于安全考虑，不希望接收端长期开放 SSH 服务，则可在接收端 \textbf{Windows PowerShell} 中执行：
+
+\begin{lstlisting}
+Stop-Service sshd
+\end{lstlisting}
+
+这样可在不使用时关闭 SSH 服务。
+
+\subsubsection{下次使用时重新开启}
+
+下次需要传输文件时，仅需再次在接收端执行：
+
+\begin{lstlisting}
+Start-Service sshd
+\end{lstlisting}
+
+即可恢复使用。
+
+\subsection{推荐的日常最简流程}
+
+日常使用时，建议采用如下最简操作流程：
+
+\begin{enumerate}
+    \item 接收端开机后，在 Windows PowerShell 中执行：
+\begin{lstlisting}
+Start-Service sshd
+\end{lstlisting}
+
+    \item 发送端打开 WSL，直接执行 rsync 命令传输文件；
+\begin{lstlisting}
+rsync -avP --inplace --partial \
+-e "ssh -T -c aes128-gcm@openssh.com -o Compression=no" \
+--rsync-path="D:/cwrsync_6.4.7_x64_free/bin/rsync.exe" \
+"/mnt/f/yourprofile/" \
+ggbond@100.102.3.10:"/cygdrive/d/targetprofile/"
+\end{lstlisting}
+    \item 文件传输完成后，如需提高安全性，则在接收端执行：
+\begin{lstlisting}
+Stop-Service sshd
+\end{lstlisting}
+
+    \item 查看sshd状态：
+\begin{lstlisting}
+Get-Service sshd
+\end{lstlisting}
+\end{enumerate} 
+\subsection{日常使用要点总结}
+
+\begin{itemize}
+    \item 接收端必须开启 SSH 服务；
+    \item 发送端不需要开启 SSH 服务；
+    \item rsync 命令始终在发送端 WSL 中执行；
+    \item 传输结束后，接收端 SSH 服务可按需关闭；
+    \item 再次传输时，仅需重新开启接收端 SSH 服务。
+\end{itemize}
+
+\section{总结}
+
+\begin{itemize}
+\item 发送端：WSL + rsync
+\item 接收端：Windows + SSH + cwRsync
+\item 核心命令：rsync + --rsync-path
+\end{itemize}
+
+\end{document}
