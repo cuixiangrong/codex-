@@ -109,7 +109,7 @@ Running
 \subsection{4. 创建目标目录}
 
 \begin{lstlisting}
-mkdir D:\targetprofile
+mkdir D:\targetfile
 \end{lstlisting}
 
 ---
@@ -170,7 +170,7 @@ exit
 \end{itemize}
 
 \begin{lstlisting}
-/cygdrive/d/targetprofile/
+/cygdrive/d/targetfile/
 \end{lstlisting}
 
 ---
@@ -184,7 +184,7 @@ rsync -avP --inplace --partial
 -e "ssh -T -c [aes128-gcm@openssh.com](mailto:aes128-gcm@openssh.com) -o Compression=no" 
 --rsync-path="D:/cwrsync_6.4.7_x64_free/bin/rsync.exe" 
 "/mnt/f/[Mumuy] 金瓶梅 1-28(武松篇章完)+番外更新 (圣诞礼物 & 简中版 DLsite发售中！) [Chinese] [Ongoing]/" 
-ggbond@100.102.3.10:"/cygdrive/d/漫画/"
+ggbond@100.102.3.10:"/cygdrive/d/targetfile/"
 \end{lstlisting}
 
 ---
@@ -343,7 +343,7 @@ rsync -avP --inplace --partial \
 -e "ssh -T -c aes128-gcm@openssh.com -o Compression=no" \
 --rsync-path="D:/cwrsync_6.4.7_x64_free/bin/rsync.exe" \
 "/mnt/f/yourprofile/" \
-ggbond@100.102.3.10:"/cygdrive/d/targetprofile/"
+ggbond@100.102.3.10:"/cygdrive/d/targetfile/"
 \end{lstlisting}
 
 需要注意：
@@ -409,7 +409,7 @@ Start-Service sshd
 日常使用时，建议采用如下最简操作流程：
 
 \begin{enumerate}
-    \item 接收端开机后，在 Windows PowerShell 中执行：
+    \item 接收端开机后，以管理员身份在 Windows PowerShell 中执行：
 \begin{lstlisting}
 Start-Service sshd
 \end{lstlisting}
@@ -420,7 +420,7 @@ rsync -avP --inplace --partial \
 -e "ssh -T -c aes128-gcm@openssh.com -o Compression=no" \
 --rsync-path="D:/cwrsync_6.4.7_x64_free/bin/rsync.exe" \
 "/mnt/f/yourprofile/" \
-ggbond@100.102.3.10:"/cygdrive/d/targetprofile/"
+ggbond@100.102.3.10:"/cygdrive/d/targetfile/"
 \end{lstlisting}
     \item 文件传输完成后，如需提高安全性，则在接收端执行：
 \begin{lstlisting}
